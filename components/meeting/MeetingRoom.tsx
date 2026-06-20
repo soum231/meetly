@@ -110,13 +110,16 @@ function MeetingContent({
 
   const handleToggleScreenShare = useCallback(async () => {
     if (!call) return;
-    const ssManager = (call as unknown as { screenShare: { getStream: () => Promise<MediaStream>; stopPublishStream: () => Promise<void> } }).screenShare;
-    if (isScreenSharing) {
-      await ssManager.stopPublishStream();
-      setIsScreenSharing(false);
-    } else {
-      await ssManager.getStream();
-      setIsScreenSharing(true);
+    try {
+      if (isScreenSharing) {
+        await call.screenShare.disable();
+        setIsScreenSharing(false);
+      } else {
+        await call.screenShare.enable();
+        setIsScreenSharing(true);
+      }
+    } catch (e) {
+      console.error("Screen share error:", e);
     }
   }, [call, isScreenSharing]);
 
