@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMeetingStore } from "@/store/useMeetingStore";
 import { cn, getInitials, getAvatarColor } from "@/lib/utils";
-import { sendMessage } from "@/actions/meeting";
+import type { ChatMessage } from "@/types";
+import { sendMessage, getMessages } from "@/actions/meeting";
+import { getSupabase } from "@/lib/supabase";
 
 interface ChatPanelProps {
   meetingId: string;
@@ -16,10 +18,14 @@ interface ChatPanelProps {
 export function ChatPanel({ meetingId }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const messages = useMeetingStore((s) => s.messages);
+  const setMessages = useMeetingStore((s) => s.setMessages);
   const addMessage = useMeetingStore((s) => s.addMessage);
   const userName = useMeetingStore((s) => s.userName);
   const setShowSidebar = useMeetingStore((s) => s.setShowSidebar);
+  const meeting = useMeetingStore((s) => s.meeting);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const dbId = meeting?.id || meetingId;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -27,13 +33,50 @@ export function ChatPanel({ meetingId }: ChatPanelProps) {
     }
   }, [messages]);
 
+  useEffect(() => {
+    const supabase = getSupabase();
+
+    getMessages(dbId).then((res) => {
+      if (res.messages) setMessages(res.messages);
+    });
+
+    let channel: any;
+
+    const setupRealtime = async () => {
+      channel = supabase
+        .channel(`chat:${dbId}`)
+        .on(
+          "postgres_changes" as any,
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "chat_messages",
+            filter: `meeting_id=eq.${dbId}`,
+          },
+          (payload: any) => {
+            const newMsg = payload.new as ChatMessage;
+            if (newMsg.sender_name !== userName) {
+              addMessage(newMsg);
+            }
+          }
+        )
+        .subscribe();
+    };
+
+    setupRealtime();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [dbId, setMessages, addMessage, userName]);
+
   const handleSend = async () => {
     if (!input.trim()) return;
 
     const messageText = input.trim();
     setInput("");
 
-    const result = await sendMessage(meetingId, userName, messageText);
+    const result = await sendMessage(dbId, userName, messageText);
 
     if (result.message) {
       addMessage(result.message);
