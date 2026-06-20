@@ -14,6 +14,19 @@ export function generateMeetingId(length = 8): string {
   return result;
 }
 
+export function generatePassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const parts: string[] = [];
+  for (let p = 0; p < 3; p++) {
+    let part = "";
+    for (let i = 0; i < 4; i++) {
+      part += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    parts.push(part);
+  }
+  return parts.join("-");
+}
+
 export function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);

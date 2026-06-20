@@ -37,6 +37,11 @@ interface MeetingState {
   // Recording
   isRecording: boolean;
   setIsRecording: (recording: boolean) => void;
+  isRecordingPaused: boolean;
+  setRecordingPaused: (paused: boolean) => void;
+  recordingSegments: string[];
+  addRecordingSegment: (url: string) => void;
+  clearRecordingSegments: () => void;
 
   // Settings
   settings: MeetingSettings;
@@ -108,6 +113,14 @@ export const useMeetingStore = create<MeetingState>((set) => ({
 
   isRecording: false,
   setIsRecording: (isRecording) => set({ isRecording }),
+  isRecordingPaused: false,
+  setRecordingPaused: (isRecordingPaused) => set({ isRecordingPaused }),
+  recordingSegments: [],
+  addRecordingSegment: (url) =>
+    set((state) => ({
+      recordingSegments: [...state.recordingSegments, url],
+    })),
+  clearRecordingSegments: () => set({ recordingSegments: [] }),
 
   settings: defaultSettings,
   updateSettings: (updates) =>
@@ -129,6 +142,8 @@ export const useMeetingStore = create<MeetingState>((set) => ({
       messages: [],
       unreadCount: 0,
       isRecording: false,
+      isRecordingPaused: false,
+      recordingSegments: [],
       isConnecting: false,
       isConnected: false,
       error: null,

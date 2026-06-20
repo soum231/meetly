@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       meetingId: result.meetingId,
       id: result.id,
+      password: result.password,
       userId,
       streamToken,
     });

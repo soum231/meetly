@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -65,20 +66,26 @@ function Section({ children, className = "", id }: { children: React.ReactNode; 
 
 export default function Home() {
   const router = useRouter();
+  const [userName, setUserName] = useState("");
   const [joinId, setJoinId] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [createdMeeting, setCreatedMeeting] = useState<{
+    meetingId: string;
+    password: string;
+  } | null>(null);
 
   const handleCreateMeeting = async () => {
+    if (!userName.trim()) return;
     setIsCreating(true);
     try {
       const res = await fetch("/api/meeting/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hostName: "Host" }),
+        body: JSON.stringify({ hostName: userName.trim() }),
       });
       const data = await res.json();
       if (data.meetingId) {
-        router.push(`/meeting/${data.meetingId}?host=Host`);
+        setCreatedMeeting({ meetingId: data.meetingId, password: data.password });
       }
     } catch {
       setIsCreating(false);
@@ -86,10 +93,106 @@ export default function Home() {
   };
 
   const handleJoinMeeting = () => {
-    if (joinId.trim()) {
-      router.push(`/meeting/${joinId.trim()}`);
-    }
+    if (!userName.trim() || !joinId.trim()) return;
+    router.push(`/meeting/${joinId.trim()}?name=${encodeURIComponent(userName.trim())}`);
   };
+
+  const shareUrl = createdMeeting
+    ? `${window.location.origin}/meeting/${createdMeeting.meetingId}`
+    : "";
+  const shareText = createdMeeting
+    ? `Join my Meetly meeting!\n\nLink: ${shareUrl}\nPassword: ${createdMeeting.password}`
+    : "";
+
+  const shareWhatsApp = () => {
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(shareText)}`,
+      "_blank"
+    );
+  };
+
+  const shareEmail = () => {
+    window.open(
+      `mailto:?subject=${encodeURIComponent("Join my Meetly meeting")}&body=${encodeURIComponent(shareText)}`,
+      "_blank"
+    );
+  };
+
+  const copyInvite = () => {
+    navigator.clipboard.writeText(shareText);
+    toast.success("Invite copied to clipboard");
+  };
+
+  if (createdMeeting) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background overflow-x-hidden items-center justify-center px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-lg"
+        >
+          <div className="rounded-3xl border border-border bg-card p-10 shadow-2xl text-center">
+            <div className="w-14 h-14 rounded-2xl bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-7 h-7 text-green-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Meeting Created
+            </h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              Share this link and password with others
+            </p>
+
+            <div className="space-y-3 mb-6 text-left">
+              <div className="bg-muted rounded-xl px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1">Meeting Link</p>
+                <p className="text-sm text-foreground font-mono break-all">{shareUrl}</p>
+              </div>
+              <div className="bg-muted rounded-xl px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1">Password</p>
+                <p className="text-2xl text-foreground font-mono font-bold tracking-wider text-center">
+                  {createdMeeting.password}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 mb-6">
+              <Button
+                onClick={shareWhatsApp}
+                className="bg-green-500 hover:bg-green-600 text-white rounded-xl h-12"
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Share via WhatsApp
+              </Button>
+              <Button
+                onClick={shareEmail}
+                variant="secondary"
+                className="rounded-xl h-12 border border-border"
+              >
+                <ExternalLink className="w-5 h-5 mr-2" />
+                Share via Email
+              </Button>
+              <Button
+                onClick={copyInvite}
+                variant="secondary"
+                className="rounded-xl h-12 border border-border"
+              >
+                <Share2 className="w-5 h-5 mr-2" />
+                Copy Invite
+              </Button>
+            </div>
+
+            <Button
+              onClick={() => router.push(`/meeting/${createdMeeting.meetingId}`)}
+              className="bg-blue-500 hover:bg-blue-600 text-white rounded-xl h-12 w-full"
+            >
+              <Video className="w-5 h-5 mr-2" />
+              Enter Meeting
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   const features = [
     { icon: Video, title: "HD Video & Audio", desc: "Crystal-clear 1080p video with noise suppression and echo cancellation for lifelike conversations." },
@@ -188,11 +291,21 @@ export default function Home() {
               No downloads. No accounts. No friction.
             </motion.p>
 
+            <motion.div variants={fadeUp} className="w-full max-w-md mx-auto mb-6">
+              <Input
+                placeholder="Enter your name"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && (joinId.trim() ? handleJoinMeeting() : handleCreateMeeting())}
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12 px-5 text-center w-full focus:border-blue-500/50 focus:ring-blue-500/20"
+              />
+            </motion.div>
+
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
               <Button
                 size="lg"
                 onClick={handleCreateMeeting}
-                disabled={isCreating}
+                disabled={!userName.trim() || isCreating}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 text-base rounded-xl w-full sm:w-auto shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300"
               >
                 {isCreating ? (
@@ -220,7 +333,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   onClick={handleJoinMeeting}
-                  disabled={!joinId.trim()}
+                  disabled={!userName.trim() || !joinId.trim()}
                   className="bg-secondary hover:bg-accent text-secondary-foreground rounded-xl h-12 px-5 border border-border"
                 >
                   Join
@@ -319,11 +432,20 @@ export default function Home() {
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 Start a meeting now. No sign-up, no downloads, no waiting.
               </p>
+              <div className="w-full max-w-sm mx-auto mb-6">
+                <Input
+                  placeholder="Enter your name"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (joinId.trim() ? handleJoinMeeting() : handleCreateMeeting())}
+                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12 px-5 text-center w-full"
+                />
+              </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Button
                   size="lg"
                   onClick={handleCreateMeeting}
-                  disabled={isCreating}
+                  disabled={!userName.trim() || isCreating}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 text-base rounded-xl w-full sm:w-auto shadow-xl shadow-blue-500/25"
                 >
                   {isCreating ? (
@@ -343,7 +465,7 @@ export default function Home() {
                   />
                   <Button
                     onClick={handleJoinMeeting}
-                    disabled={!joinId.trim()}
+                    disabled={!userName.trim() || !joinId.trim()}
                     className="bg-secondary hover:bg-accent text-secondary-foreground rounded-xl h-12 px-5 border border-border"
                   >
                     Join

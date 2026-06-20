@@ -12,6 +12,9 @@ import {
   Settings,
   PhoneOff,
   Radio,
+  Pause,
+  Play,
+  Square,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,12 +27,16 @@ interface MeetingControlsProps {
   onToggleMic: () => void;
   onToggleCamera: () => void;
   onToggleScreenShare: () => void;
-  onToggleRecording: () => void;
+  onStartRecording: () => void;
+  onPauseRecording: () => void;
+  onResumeRecording: () => void;
+  onStopRecording: () => void;
   onLeave: () => void;
   isMicEnabled: boolean;
   isCameraEnabled: boolean;
   isScreenSharing: boolean;
   isRecording: boolean;
+  isRecordingPaused: boolean;
   isHost: boolean;
 }
 
@@ -37,12 +44,16 @@ export function MeetingControls({
   onToggleMic,
   onToggleCamera,
   onToggleScreenShare,
-  onToggleRecording,
+  onStartRecording,
+  onPauseRecording,
+  onResumeRecording,
+  onStopRecording,
   onLeave,
   isMicEnabled,
   isCameraEnabled,
   isScreenSharing,
   isRecording,
+  isRecordingPaused,
   isHost,
 }: MeetingControlsProps) {
   const [showSettings, setShowSettings] = useState(false);
@@ -138,26 +149,82 @@ export function MeetingControls({
           </TooltipContent>
         </Tooltip>
 
-        {isHost && (
+        {isHost && !isRecording && !isRecordingPaused && (
           <Tooltip>
             <TooltipTrigger>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onToggleRecording}
-                className={`${controlButtonClass} ${
-                  isRecording
-                    ? "bg-red-500/80 hover:bg-red-500 text-white animate-pulse"
-                    : "bg-white/10 hover:bg-white/20 text-white"
-                }`}
+                onClick={onStartRecording}
+                className={`${controlButtonClass} bg-white/10 hover:bg-white/20 text-white`}
               >
                 <Radio className="w-5 h-5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              {isRecording ? "Stop recording" : "Start recording"}
-            </TooltipContent>
+            <TooltipContent>Start recording</TooltipContent>
           </Tooltip>
+        )}
+
+        {isHost && isRecording && !isRecordingPaused && (
+          <>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onPauseRecording}
+                  className={`${controlButtonClass} bg-amber-500/80 hover:bg-amber-500 text-white`}
+                >
+                  <Pause className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Pause recording</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onStopRecording}
+                  className={`${controlButtonClass} bg-red-500/80 hover:bg-red-500 text-white`}
+                >
+                  <Square className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Stop recording</TooltipContent>
+            </Tooltip>
+          </>
+        )}
+
+        {isHost && isRecordingPaused && (
+          <>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onResumeRecording}
+                  className={`${controlButtonClass} bg-green-500/80 hover:bg-green-500 text-white animate-pulse`}
+                >
+                  <Play className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Resume recording</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onStopRecording}
+                  className={`${controlButtonClass} bg-red-500/80 hover:bg-red-500 text-white`}
+                >
+                  <Square className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Stop recording</TooltipContent>
+            </Tooltip>
+          </>
         )}
 
         <div className="w-px h-8 bg-white/10 mx-1" />

@@ -1,6 +1,7 @@
 export type Meeting = {
   id: string;
   meeting_id: string;
+  password: string;
   host_name: string;
   host_user_id?: string;
   created_at: string;

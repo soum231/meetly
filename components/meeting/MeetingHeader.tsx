@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Clock, BadgeAlert } from "lucide-react";
+import { Copy, Clock, BadgeAlert, MessageCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMeetingStore } from "@/store/useMeetingStore";
 import { formatDuration } from "@/lib/utils";
@@ -13,6 +13,7 @@ interface MeetingHeaderProps {
 export function MeetingHeader({ elapsed }: MeetingHeaderProps) {
   const meeting = useMeetingStore((s) => s.meeting);
   const isRecording = useMeetingStore((s) => s.isRecording);
+  const isRecordingPaused = useMeetingStore((s) => s.isRecordingPaused);
   const isConnected = useMeetingStore((s) => s.isConnected);
 
   const copyLink = () => {
@@ -33,10 +34,16 @@ export function MeetingHeader({ elapsed }: MeetingHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        {isRecording && (
+        {isRecording && !isRecordingPaused && (
           <div className="flex items-center gap-1.5 text-red-400 text-xs">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             Recording
+          </div>
+        )}
+        {isRecordingPaused && (
+          <div className="flex items-center gap-1.5 text-amber-400 text-xs">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            Paused
           </div>
         )}
 
@@ -61,6 +68,35 @@ export function MeetingHeader({ elapsed }: MeetingHeaderProps) {
           <Copy className="w-3.5 h-3.5 mr-1" />
           Copy Link
         </Button>
+
+        {meeting?.password && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const text = `Join my Meetly meeting!\n\nLink: ${window.location.origin}/meeting/${meeting?.meeting_id}\nPassword: ${meeting?.password}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+              }}
+              className="text-white/60 hover:text-white h-7 text-xs"
+            >
+              <MessageCircle className="w-3.5 h-3.5 mr-1" />
+              WhatsApp
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const text = `Join my Meetly meeting!\n\nLink: ${window.location.origin}/meeting/${meeting?.meeting_id}\nPassword: ${meeting?.password}`;
+                window.open(`mailto:?subject=${encodeURIComponent("Join my Meetly meeting")}&body=${encodeURIComponent(text)}`, "_blank");
+              }}
+              className="text-white/60 hover:text-white h-7 text-xs"
+            >
+              <ExternalLink className="w-3.5 h-3.5 mr-1" />
+              Email
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

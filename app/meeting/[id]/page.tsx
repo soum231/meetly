@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
-import { Loader2 } from "lucide-react";
+import { Loader2, Copy, MessageCircle, ExternalLink } from "lucide-react";
 import { useMeetingStore } from "@/store/useMeetingStore";
+import { toast } from "sonner";
 
 function MeetingPageInner() {
   const params = useParams();
@@ -17,62 +18,39 @@ function MeetingPageInner() {
   const id = params.id as string;
 
   const [name, setName] = useState(searchParams.get("name") || "");
-  const [hostName, setHostName] = useState(searchParams.get("host") || "");
+  const [password, setPassword] = useState(searchParams.get("pw") || "");
+  const [meetingInfo, setMeetingInfo] = useState<{
+    password: string;
+    host_name: string;
+  } | null>(null);
   const [state, setState] = useState<
-    "joining" | "lobby" | "connecting" | "connected" | "error"
-  >(hostName ? "connecting" : "lobby");
+    "lobby" | "connecting" | "connected" | "error"
+  >("lobby");
   const [error, setError] = useState("");
   const [meetingData, setMeetingData] = useState<{
     streamToken: string;
     userId: string;
     meetingId: string;
     callId: string;
+    isHost: boolean;
   } | null>(null);
 
   const setUser = useMeetingStore((s) => s.setUser);
   const setMeeting = useMeetingStore((s) => s.setMeeting);
 
   useEffect(() => {
-    if (!hostName || !id) return;
-
-    const setupMeeting = async () => {
-      setState("connecting");
-      try {
-        const res = await fetch(`/api/meeting/${id}/join`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userName: hostName }),
-        });
-        const data = await res.json();
-
-        if (data.error) {
-          setError(data.error);
-          setState("error");
-          return;
+    fetch(`/api/meeting/${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.meeting) {
+          setMeetingInfo({ password: data.meeting.password, host_name: data.meeting.host_name });
         }
-
-        setUser(data.userId, hostName, true);
-        setMeeting(data.meeting);
-
-        setMeetingData({
-          streamToken: data.streamToken,
-          userId: data.userId,
-          meetingId: data.meeting.meeting_id,
-          callId: id,
-        });
-
-        setState("connected");
-      } catch {
-        setError("Failed to connect. Please try again.");
-        setState("error");
-      }
-    };
-
-    setupMeeting();
-  }, [hostName, id, setUser, setMeeting]);
+      })
+      .catch(() => {});
+  }, [id]);
 
   const handleJoin = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !password.trim()) return;
     setState("connecting");
     setError("");
 
@@ -80,7 +58,7 @@ function MeetingPageInner() {
       const res = await fetch(`/api/meeting/${id}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userName: name.trim() }),
+        body: JSON.stringify({ userName: name.trim(), password: password.trim() }),
       });
       const data = await res.json();
 
@@ -90,7 +68,7 @@ function MeetingPageInner() {
         return;
       }
 
-      setUser(data.userId, name.trim(), false);
+      setUser(data.userId, name.trim(), data.isHost);
       setMeeting(data.meeting);
 
       setMeetingData({
@@ -98,6 +76,7 @@ function MeetingPageInner() {
         userId: data.userId,
         meetingId: data.meeting.meeting_id,
         callId: id,
+        isHost: data.isHost,
       });
 
       setState("connected");
@@ -107,14 +86,21 @@ function MeetingPageInner() {
     }
   };
 
+  const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/meeting/${id}`;
+  const shareText = `Join my Meetly meeting!\n\nLink: ${shareUrl}\nPassword: ${meetingInfo?.password || "(ask host)"}`;
+
+  const shareWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank");
+  const shareEmail = () => window.open(`mailto:?subject=${encodeURIComponent("Join my Meetly meeting")}&body=${encodeURIComponent(shareText)}`, "_blank");
+  const copyInvite = () => { navigator.clipboard.writeText(shareText); toast.success("Invite copied"); };
+
   if (state === "connected" && meetingData) {
     return (
       <MeetingRoom
         meetingId={meetingData.meetingId}
         streamToken={meetingData.streamToken}
         userId={meetingData.userId}
-        userName={hostName || name}
-        isHost={!!hostName}
+        userName={name}
+        isHost={meetingData.isHost}
         callId={meetingData.callId}
       />
     );
@@ -173,7 +159,7 @@ function MeetingPageInner() {
             Join Meeting
           </CardTitle>
           <p className="text-white/40 text-sm">
-            Enter your name to join the meeting
+            Enter your name and the meeting password
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -184,15 +170,37 @@ function MeetingPageInner() {
             className="bg-zinc-800 border-zinc-700 text-white placeholder:text-white/30"
             onKeyDown={(e) => e.key === "Enter" && handleJoin()}
           />
+          <Input
+            placeholder="Meeting password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="bg-zinc-800 border-zinc-700 text-white placeholder:text-white/30 font-mono tracking-wider text-center"
+            onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+          />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <Button
             className="w-full bg-blue-500 hover:bg-blue-600 text-white"
             size="lg"
             onClick={handleJoin}
-            disabled={!name.trim()}
+            disabled={!name.trim() || !password.trim()}
           >
             Join Meeting
           </Button>
+
+          <div className="pt-2 border-t border-zinc-700">
+            <p className="text-xs text-white/40 text-center mb-3">Share this meeting</p>
+            <div className="flex items-center justify-center gap-2">
+              <Button variant="ghost" size="sm" onClick={shareWhatsApp} className="text-white/60 hover:text-white text-xs">
+                <MessageCircle className="w-4 h-4 mr-1" /> WhatsApp
+              </Button>
+              <Button variant="ghost" size="sm" onClick={shareEmail} className="text-white/60 hover:text-white text-xs">
+                <ExternalLink className="w-4 h-4 mr-1" /> Email
+              </Button>
+              <Button variant="ghost" size="sm" onClick={copyInvite} className="text-white/60 hover:text-white text-xs">
+                <Copy className="w-4 h-4 mr-1" /> Copy
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

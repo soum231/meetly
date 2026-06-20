@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS meetings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   meeting_id TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
   host_name TEXT NOT NULL,
   host_user_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),

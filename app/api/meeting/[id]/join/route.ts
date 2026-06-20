@@ -9,7 +9,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const { userName } = await request.json();
+    const { userName, password } = await request.json();
 
     if (!userName || typeof userName !== "string" || userName.trim().length === 0) {
       return NextResponse.json(
@@ -28,15 +28,24 @@ export async function POST(
     }
 
     const meeting = meetingResult.meeting;
+
+    if (password !== meeting.password) {
+      return NextResponse.json(
+        { error: "Invalid meeting password" },
+        { status: 403 }
+      );
+    }
+
     const supabase = getSupabaseAdmin();
     const userId = crypto.randomUUID();
+    const isHost = userName.trim() === meeting.host_name;
 
     const { data: participant, error: participantError } = await (supabase
       .from("participants") as any)
       .insert({
         meeting_id: meeting.id,
         name: userName.trim(),
-        is_host: false,
+        is_host: isHost,
         camera_enabled: false,
         mic_enabled: false,
       })
@@ -57,6 +66,7 @@ export async function POST(
       participant,
       streamToken,
       userId,
+      isHost,
     });
   } catch (error) {
     console.error("Error joining meeting:", error);

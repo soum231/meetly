@@ -48,6 +48,9 @@ function MeetingContent({
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const isRecording = useMeetingStore((s) => s.isRecording);
   const setIsRecording = useMeetingStore((s) => s.setIsRecording);
+  const isRecordingPaused = useMeetingStore((s) => s.isRecordingPaused);
+  const setRecordingPaused = useMeetingStore((s) => s.setRecordingPaused);
+  const addRecordingSegment = useMeetingStore((s) => s.addRecordingSegment);
   const showSidebar = useMeetingStore((s) => s.showSidebar);
   const sidebarView = useMeetingStore((s) => s.sidebarView);
   const setParticipants = useMeetingStore((s) => s.setParticipants);
@@ -117,35 +120,59 @@ function MeetingContent({
     }
   }, [call, isScreenSharing]);
 
-  const handleToggleRecording = useCallback(async () => {
+  const saveLastRecording = useCallback(async () => {
     if (!call) return;
-    if (isRecording) {
-      await (call as unknown as { stopRecording: () => Promise<void> }).stopRecording();
-      setIsRecording(false);
-      try {
-        const recordings = await (call as unknown as { queryRecordings: () => Promise<{ recordings: { url: string; filename: string; duration_seconds?: number }[] }> }).queryRecordings();
-        const rec = recordings.recordings?.[0];
-        if (rec?.url) {
-          const meeting = useMeetingStore.getState().meeting;
-          await fetch("/api/meeting/recording/save", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              meetingDbId: meeting?.id,
-              recordingUrl: rec.url,
-              duration: rec.duration_seconds ?? 0,
-              filename: rec.filename,
-            }),
-          });
-        }
-      } catch (e) {
-        console.error("Failed to save recording URL:", e);
+    try {
+      const recordings = await (call as unknown as { queryRecordings: () => Promise<{ recordings: { url: string; filename: string; duration_seconds?: number }[] }> }).queryRecordings();
+      const rec = recordings.recordings?.[0];
+      if (rec?.url) {
+        const meeting = useMeetingStore.getState().meeting;
+        await fetch("/api/meeting/recording/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            meetingDbId: meeting?.id,
+            recordingUrl: rec.url,
+            duration: rec.duration_seconds ?? 0,
+            filename: rec.filename,
+          }),
+        });
+        addRecordingSegment(rec.url);
       }
-    } else {
-      await (call as unknown as { startRecording: () => Promise<void> }).startRecording();
-      setIsRecording(true);
+    } catch (e) {
+      console.error("Failed to save recording URL:", e);
     }
-  }, [call, isRecording, setIsRecording]);
+  }, [call, addRecordingSegment]);
+
+  const handleStartRecording = useCallback(async () => {
+    if (!call) return;
+    await (call as unknown as { startRecording: () => Promise<void> }).startRecording();
+    setIsRecording(true);
+    setRecordingPaused(false);
+  }, [call, setIsRecording, setRecordingPaused]);
+
+  const handlePauseRecording = useCallback(async () => {
+    if (!call) return;
+    await (call as unknown as { stopRecording: () => Promise<void> }).stopRecording();
+    await saveLastRecording();
+    setIsRecording(true);
+    setRecordingPaused(true);
+  }, [call, saveLastRecording, setIsRecording, setRecordingPaused]);
+
+  const handleResumeRecording = useCallback(async () => {
+    if (!call) return;
+    await (call as unknown as { startRecording: () => Promise<void> }).startRecording();
+    setIsRecording(true);
+    setRecordingPaused(false);
+  }, [call, setIsRecording, setRecordingPaused]);
+
+  const handleStopRecording = useCallback(async () => {
+    if (!call) return;
+    await (call as unknown as { stopRecording: () => Promise<void> }).stopRecording();
+    await saveLastRecording();
+    setIsRecording(false);
+    setRecordingPaused(false);
+  }, [call, saveLastRecording, setIsRecording, setRecordingPaused]);
 
   const handleLeave = useCallback(async () => {
     if (!call) return;
@@ -231,12 +258,16 @@ function MeetingContent({
         onToggleMic={handleToggleMic}
         onToggleCamera={handleToggleCamera}
         onToggleScreenShare={handleToggleScreenShare}
-        onToggleRecording={handleToggleRecording}
+        onStartRecording={handleStartRecording}
+        onPauseRecording={handlePauseRecording}
+        onResumeRecording={handleResumeRecording}
+        onStopRecording={handleStopRecording}
         onLeave={handleLeave}
         isMicEnabled={isMicEnabled}
         isCameraEnabled={isCameraEnabled}
         isScreenSharing={isScreenSharing}
         isRecording={isRecording}
+        isRecordingPaused={isRecordingPaused}
         isHost={isHost}
       />
     </div>

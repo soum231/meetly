@@ -2,16 +2,18 @@
 
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { generateUserToken } from "@/lib/stream";
-import { generateMeetingId } from "@/lib/utils";
+import { generateMeetingId, generatePassword } from "@/lib/utils";
 
 export async function createMeeting(hostName: string) {
   const supabase = getSupabaseAdmin();
   const meetingId = generateMeetingId(10);
+  const password = generatePassword();
 
   const { data: meeting, error } = await (supabase
     .from("meetings") as any)
     .insert({
       meeting_id: meetingId,
+      password,
       host_name: hostName,
       status: "waiting",
       recording_enabled: true,
@@ -24,7 +26,7 @@ export async function createMeeting(hostName: string) {
     return { error: "Failed to create meeting" };
   }
 
-  return { meetingId: meeting.meeting_id, id: meeting.id };
+  return { meetingId: meeting.meeting_id, id: meeting.id, password };
 }
 
 export async function getMeeting(meetingId: string) {
