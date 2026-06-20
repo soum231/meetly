@@ -192,7 +192,7 @@ function MeetingContent({
   const isCameraEnabled = camManager?.state.optimisticStatus === 'enabled';
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-950">
+    <div className="flex flex-col h-full bg-zinc-950">
       <MeetingHeader elapsed={elapsed} />
 
       <div className="flex-1 flex overflow-hidden">
@@ -341,7 +341,7 @@ export function MeetingRoom({
   return (
     <StreamVideo client={client}>
       <StreamCall call={call}>
-        <StreamTheme className="!bg-zinc-950">
+        <StreamTheme className="!bg-zinc-950 h-screen overflow-hidden">
           <MeetingContent meetingId={meetingId} isHost={isHost} />
         </StreamTheme>
       </StreamCall>

@@ -95,16 +95,62 @@
   }
 }
 
+/* Hide Stream's built-in UI overlays we replace with custom controls */
+.str-video__call-controls,
+.str-video__call-panel,
+.str-video__screen-share-overlay,
+.str-video__device-settings,
+.str-video__reaction-icon,
+.str-video__call-panel__title,
+.str-video__call-panel__description,
+.str-video__notification {
+  display: none !important;
+}
+
+/* Participant view - our wrapper handles border-radius */
 .str-video__participant-view {
-  border-radius: 0.75rem;
+  border-radius: 0 !important;
   overflow: hidden;
 }
 
-.str-video__call-controls {
-  display: none;
+/* Remove Stream's participant overlay labels that float on video */
+.str-video__participant-view-overlay,
+.str-video__participant-name,
+.str-video__participant-details {
+  display: none !important;
 }
 
+/* Grid layout override */
 .str-video__grid-layout {
-  display: grid;
-  gap: 0.5rem;
+  display: contents !important;
+}
+
+/* Remove any default padding/margin from Stream theme wrapper */
+.str-video__theme {
+  padding: 0 !important;
+}
+
+/* Hide Stream's recording indicator - we have our own */
+.str-video__recording-indicator {
+  display: none !important;
+}
+
+/* Hide connection quality indicator */
+.str-video__participant-view-connection-quality {
+  display: none !important;
+}
+
+/* Hide any Stream floating menus or tooltips */
+.str-video__menu,
+.str-video__tooltip {
+  display: none !important;
+}
+
+/* Remove Stream inner gap/spacing */
+.str-video__video-container {
+  height: 100% !important;
+}
+
+.str-video__video {
+  object-fit: cover !important;
 }
