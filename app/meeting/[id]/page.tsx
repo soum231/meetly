@@ -17,8 +17,8 @@ function MeetingPageInner() {
   const router = useRouter();
   const id = params.id as string;
 
-  const [name, setName] = useState(searchParams.get("name") || "");
   const [password, setPassword] = useState(searchParams.get("pw") || "");
+  const [guestName, setGuestName] = useState("");
   const [meetingInfo, setMeetingInfo] = useState<{
     password: string;
     host_name: string;
@@ -49,8 +49,19 @@ function MeetingPageInner() {
       .catch(() => {});
   }, [id]);
 
+  const generateGuestName = () => {
+    const adjectives = ["Swift", "Bold", "Calm", "Wise", "Neon", "Peak", "Zen", "Arc", "Flux", "Nova"];
+    const nouns = ["Panda", "Falcon", "Tiger", "Echo", "Orbit", "Wave", "Pixel", "Storm", "Blaze", "Harbor"];
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    const num = Math.floor(Math.random() * 100);
+    return `${adj}${noun}${num}`;
+  };
+
   const handleJoin = async () => {
-    if (!name.trim() || !password.trim()) return;
+    if (!password.trim()) return;
+    const name = generateGuestName();
+    setGuestName(name);
     setState("connecting");
     setError("");
 
@@ -58,7 +69,7 @@ function MeetingPageInner() {
       const res = await fetch(`/api/meeting/${id}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userName: name.trim(), password: password.trim() }),
+        body: JSON.stringify({ userName: name, password: password.trim() }),
       });
       const data = await res.json();
 
@@ -68,7 +79,7 @@ function MeetingPageInner() {
         return;
       }
 
-      setUser(data.userId, name.trim(), data.isHost);
+      setUser(data.userId, name, data.isHost);
       setMeeting(data.meeting);
 
       setMeetingData({
@@ -99,7 +110,7 @@ function MeetingPageInner() {
         meetingId={meetingData.meetingId}
         streamToken={meetingData.streamToken}
         userId={meetingData.userId}
-        userName={name}
+        userName={guestName}
         isHost={meetingData.isHost}
         callId={meetingData.callId}
       />
@@ -159,30 +170,24 @@ function MeetingPageInner() {
             Join Meeting
           </CardTitle>
           <p className="text-white/40 text-sm">
-            Enter your name and the meeting password
+            Enter the meeting password to join
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
-            placeholder="Your name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="bg-zinc-800 border-zinc-700 text-white placeholder:text-white/30"
-            onKeyDown={(e) => e.key === "Enter" && handleJoin()}
-          />
-          <Input
             placeholder="Meeting password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="bg-zinc-800 border-zinc-700 text-white placeholder:text-white/30 font-mono tracking-wider text-center"
+            className="bg-zinc-800 border-zinc-700 text-white placeholder:text-white/30 font-mono tracking-wider text-center text-lg"
             onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+            autoFocus
           />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <Button
             className="w-full bg-blue-500 hover:bg-blue-600 text-white"
             size="lg"
             onClick={handleJoin}
-            disabled={!name.trim() || !password.trim()}
+            disabled={!password.trim()}
           >
             Join Meeting
           </Button>
