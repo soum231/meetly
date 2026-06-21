@@ -17,7 +17,6 @@ import {
   Square,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMeetingStore } from "@/store/useMeetingStore";
 import { useCallback, useState } from "react";
 import { SettingsModal } from "@/components/SettingsModal";
@@ -50,26 +49,16 @@ function ControlButton({
   className?: string;
   tooltip: string;
 }) {
-  const handleClick = (e: any) => {
-    e.preventDefault();
-    onClick();
-  };
-
   return (
-    <Tooltip>
-      <TooltipTrigger>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleClick}
-          onTouchEnd={handleClick}
-          className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all active:scale-95 touch-manipulation ${className}`}
-        >
-          <Icon className="w-5 h-5" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top">{tooltip}</TooltipContent>
-    </Tooltip>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      title={tooltip}
+      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all active:scale-95 touch-manipulation ${className}`}
+    >
+      <Icon className="w-5 h-5" />
+    </Button>
   );
 }
 
