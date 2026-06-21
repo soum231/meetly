@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Meetly',
   webDir: 'out',
   server: {
-    url: 'https://meetly.vercel.app',
+    url: 'https://meetlyin.vercel.app',
     cleartext: true,
   },
   android: {
