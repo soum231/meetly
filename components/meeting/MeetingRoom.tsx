@@ -79,13 +79,11 @@ function MeetingContent({
         id: p.userId || p.sessionId,
         meeting_id: meetingId,
         name: p.name || "Unknown",
-        joined_at: new Date().toISOString(),
-        is_host: isHost && p.userId === localParticipant?.userId,
-        camera_enabled: p.videoStream ? true : false,
-        mic_enabled: p.audioStream ? true : false,
+        camera_enabled: !!p.videoStream,
+        mic_enabled: !!p.audioStream,
       }))
     );
-  }, [participants, meetingId, isHost, localParticipant]);
+  }, [participants, meetingId]);
 
   const handleToggleMic = useCallback(async () => {
     if (!call) return;
@@ -155,32 +153,50 @@ function MeetingContent({
 
   const handleStartRecording = useCallback(async () => {
     if (!call) return;
-    await (call as unknown as { startRecording: () => Promise<void> }).startRecording();
-    setIsRecording(true);
-    setRecordingPaused(false);
+    try {
+      await (call as unknown as { startRecording: () => Promise<void> }).startRecording();
+      setIsRecording(true);
+      setRecordingPaused(false);
+    } catch (e) {
+      console.error("Failed to start recording:", e);
+    }
   }, [call, setIsRecording, setRecordingPaused]);
 
   const handlePauseRecording = useCallback(async () => {
     if (!call) return;
-    await (call as unknown as { stopRecording: () => Promise<void> }).stopRecording();
-    await saveLastRecording();
-    setIsRecording(true);
-    setRecordingPaused(true);
+    try {
+      await (call as unknown as { stopRecording: () => Promise<void> }).stopRecording();
+      await saveLastRecording();
+      setIsRecording(true);
+      setRecordingPaused(true);
+    } catch (e) {
+      console.error("Failed to pause recording:", e);
+    }
   }, [call, saveLastRecording, setIsRecording, setRecordingPaused]);
 
   const handleResumeRecording = useCallback(async () => {
     if (!call) return;
-    await (call as unknown as { startRecording: () => Promise<void> }).startRecording();
-    setIsRecording(true);
-    setRecordingPaused(false);
+    try {
+      await (call as unknown as { startRecording: () => Promise<void> }).startRecording();
+      setIsRecording(true);
+      setRecordingPaused(false);
+    } catch (e) {
+      console.error("Failed to resume recording:", e);
+    }
   }, [call, setIsRecording, setRecordingPaused]);
 
   const handleStopRecording = useCallback(async () => {
     if (!call) return;
-    await (call as unknown as { stopRecording: () => Promise<void> }).stopRecording();
-    await saveLastRecording();
-    setIsRecording(false);
-    setRecordingPaused(false);
+    try {
+      await (call as unknown as { stopRecording: () => Promise<void> }).stopRecording();
+      await saveLastRecording();
+      setIsRecording(false);
+      setRecordingPaused(false);
+    } catch (e) {
+      console.error("Failed to stop recording:", e);
+      setIsRecording(false);
+      setRecordingPaused(false);
+    }
   }, [call, saveLastRecording, setIsRecording, setRecordingPaused]);
 
   const handleLeave = useCallback(async () => {

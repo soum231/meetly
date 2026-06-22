@@ -17,18 +17,11 @@ function JoinForm() {
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState("");
 
-  const handleJoin = async () => {
+  const handleJoin = () => {
     if (!name.trim() || !meetingId.trim()) return;
-
     setIsJoining(true);
     setError("");
-
-    try {
-      router.push(`/meeting/${meetingId.trim()}?name=${encodeURIComponent(name.trim())}`);
-    } catch {
-      setError("Failed to join meeting. Please try again.");
-      setIsJoining(false);
-    }
+    router.push(`/meeting/${meetingId.trim()}?name=${encodeURIComponent(name.trim())}`);
   };
 
   return (

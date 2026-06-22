@@ -40,7 +40,10 @@ function MeetingPageInner() {
 
   useEffect(() => {
     fetch(`/api/meeting/${id}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Meeting not found");
+        return r.json();
+      })
       .then((data) => {
         if (data.meeting) {
           setMeetingInfo({ password: data.meeting.password, host_name: data.meeting.host_name });

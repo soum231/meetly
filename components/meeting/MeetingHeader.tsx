@@ -16,20 +16,34 @@ export function MeetingHeader({ elapsed }: MeetingHeaderProps) {
   const isRecordingPaused = useMeetingStore((s) => s.isRecordingPaused);
   const isConnected = useMeetingStore((s) => s.isConnected);
 
+  const meetingId = meeting?.meeting_id;
+
   const copyLink = () => {
-    const link = `${window.location.origin}/meeting/${meeting?.meeting_id}`;
-    navigator.clipboard.writeText(link);
-    toast.success("Link copied to clipboard");
+    if (!meetingId) return;
+    const link = `${window.location.origin}/meeting/${meetingId}`;
+    try {
+      navigator.clipboard.writeText(link);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
+
+  const buildShareText = () => {
+    if (!meetingId) return "";
+    const link = `${window.location.origin}/meeting/${meetingId}`;
+    const pw = meeting?.password ? `\nPassword: ${meeting.password}` : "";
+    return `Join my Meetly meeting!\n\nLink: ${link}${pw}`;
   };
 
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-black/50 backdrop-blur-sm border-b border-white/10">
       <div className="flex items-center gap-3">
         <h1 className="text-sm font-medium text-white">
-          {meeting?.host_name}&apos;s Meeting
+          {meeting?.host_name || "Meeting"}
         </h1>
         <span className="text-xs text-white/40 font-mono">
-          {meeting?.meeting_id}
+          {meetingId || ""}
         </span>
       </div>
 
@@ -69,15 +83,12 @@ export function MeetingHeader({ elapsed }: MeetingHeaderProps) {
           Copy Link
         </Button>
 
-        {meeting?.password && (
+        {meeting?.password && meetingId && (
           <>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                const text = `Join my Meetly meeting!\n\nLink: ${window.location.origin}/meeting/${meeting?.meeting_id}\nPassword: ${meeting?.password}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-              }}
+              onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(buildShareText())}`, "_blank")}
               className="text-white/60 hover:text-white h-7 text-xs"
             >
               <MessageCircle className="w-3.5 h-3.5 mr-1" />
@@ -86,10 +97,7 @@ export function MeetingHeader({ elapsed }: MeetingHeaderProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                const text = `Join my Meetly meeting!\n\nLink: ${window.location.origin}/meeting/${meeting?.meeting_id}\nPassword: ${meeting?.password}`;
-                window.open(`mailto:?subject=${encodeURIComponent("Join my Meetly meeting")}&body=${encodeURIComponent(text)}`, "_blank");
-              }}
+              onClick={() => window.open(`mailto:?subject=${encodeURIComponent("Join my Meetly meeting")}&body=${encodeURIComponent(buildShareText())}`, "_blank")}
               className="text-white/60 hover:text-white h-7 text-xs"
             >
               <ExternalLink className="w-3.5 h-3.5 mr-1" />

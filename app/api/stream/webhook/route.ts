@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { createHmac } from "node:crypto";
 
-async function verifySignature(
+function verifySignature(
   body: string,
   signature: string | null
-): Promise<boolean> {
+): boolean {
   if (!signature) return false;
   const secret = process.env.STREAM_SECRET;
   if (!secret) return false;
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const body = await request.text();
     const signature = request.headers.get("x-signature");
 
-    const isValid = await verifySignature(body, signature);
+    const isValid = verifySignature(body, signature);
     if (!isValid) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }

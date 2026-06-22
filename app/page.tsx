@@ -86,8 +86,12 @@ export default function Home() {
       const data = await res.json();
       if (data.meetingId) {
         setCreatedMeeting({ meetingId: data.meetingId, password: data.password });
+      } else {
+        toast.error(data.error || "Failed to create meeting");
       }
     } catch {
+      toast.error("Failed to create meeting");
+    } finally {
       setIsCreating(false);
     }
   };
@@ -119,8 +123,12 @@ export default function Home() {
   };
 
   const copyInvite = () => {
-    navigator.clipboard.writeText(shareText);
-    toast.success("Invite copied to clipboard");
+    try {
+      navigator.clipboard.writeText(shareText);
+      toast.success("Invite copied to clipboard");
+    } catch {
+      toast.error("Failed to copy");
+    }
   };
 
   if (createdMeeting) {

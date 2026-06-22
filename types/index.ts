@@ -15,9 +15,9 @@ export type Participant = {
   id: string;
   meeting_id: string;
   name: string;
-  joined_at: string;
+  joined_at?: string;
   left_at?: string;
-  is_host: boolean;
+  is_host?: boolean;
   camera_enabled: boolean;
   mic_enabled: boolean;
 };

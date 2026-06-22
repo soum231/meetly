@@ -35,12 +35,14 @@ export function ChatPanel({ meetingId }: ChatPanelProps) {
 
   useEffect(() => {
     const supabase = getSupabase();
+    let cancelled = false;
+    let channel: any;
 
     getMessages(dbId).then((res) => {
-      if (res.messages) setMessages(res.messages);
+      if (!cancelled && res.messages) {
+        setMessages(res.messages);
+      }
     });
-
-    let channel: any;
 
     const setupRealtime = async () => {
       channel = supabase
@@ -66,6 +68,7 @@ export function ChatPanel({ meetingId }: ChatPanelProps) {
     setupRealtime();
 
     return () => {
+      cancelled = true;
       if (channel) supabase.removeChannel(channel);
     };
   }, [dbId, setMessages, addMessage, userName]);

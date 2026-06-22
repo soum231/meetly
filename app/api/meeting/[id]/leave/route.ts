@@ -10,6 +10,16 @@ export async function POST(
     const { participantId } = await request.json();
     const supabase = getSupabaseAdmin();
 
+    const { data: meeting } = await (supabase
+      .from("meetings") as any)
+      .select("id")
+      .eq("meeting_id", id)
+      .single();
+
+    if (!meeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    }
+
     const { error: participantError } = await (supabase
       .from("participants") as any)
       .update({ left_at: new Date().toISOString() })
@@ -25,14 +35,14 @@ export async function POST(
     const { data: remainingParticipants } = await (supabase
       .from("participants") as any)
       .select("id")
-      .eq("meeting_id", id)
+      .eq("meeting_id", meeting.id)
       .is("left_at", null);
 
     if (!remainingParticipants || remainingParticipants.length === 0) {
       await (supabase
         .from("meetings") as any)
         .update({ status: "ended", ended_at: new Date().toISOString() })
-        .eq("id", id);
+        .eq("id", meeting.id);
     }
 
     return NextResponse.json({ success: true });

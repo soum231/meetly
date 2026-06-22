@@ -48,11 +48,12 @@ export function ParticipantsPanel() {
                   )}
                 </div>
                 <span className="text-xs text-white/40">
-                  Joined{" "}
-                  {new Date(participant.joined_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {participant.joined_at
+                    ? `Joined ${new Date(participant.joined_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}`
+                    : "In meeting"}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">

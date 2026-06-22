@@ -38,8 +38,10 @@ export function formatDuration(seconds: number): string {
 }
 
 export function getInitials(name: string): string {
+  if (!name || !name.trim()) return "?";
   return name
-    .split(" ")
+    .trim()
+    .split(/\s+/)
     .map((n) => n[0])
     .join("")
     .toUpperCase()
