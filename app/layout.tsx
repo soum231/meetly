@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   title: "Meetly - Simple Video Meetings",
   description:
     "Create and join video meetings instantly. No sign-up required.",
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({

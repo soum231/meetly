@@ -21,6 +21,7 @@ import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ParticipantsPanel } from "@/components/participants/ParticipantsPanel";
 import { useTimer } from "@/hooks/useTimer";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface MeetingRoomProps {
   meetingId: string;
@@ -110,6 +111,10 @@ function MeetingContent({
 
   const handleToggleScreenShare = useCallback(async () => {
     if (!call) return;
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      toast.error("Screen sharing is not supported in this browser");
+      return;
+    }
     try {
       if (isScreenSharing) {
         await call.screenShare.disable();
@@ -119,7 +124,8 @@ function MeetingContent({
         setIsScreenSharing(true);
       }
     } catch (e) {
-      console.error("Screen share error:", e);
+      toast.error("Screen share failed: " + (e instanceof Error ? e.message : "unknown error"));
+      setIsScreenSharing(false);
     }
   }, [call, isScreenSharing]);
 
